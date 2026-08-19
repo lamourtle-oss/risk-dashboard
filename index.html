@@ -2,166 +2,46 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Risk Management Dashboard — SINGER</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<title>SINGER Risk Dashboard — เข้าสู่ระบบ</title>
 <style>
-  :root{
-    --bg:#f4f6fa; --card:#ffffff; --ink:#1f2937; --muted:#6b7280;
-    --blue:#1e5aa8; --red:#d64545; --amber:#e8a13c; --green:#3d9970; --purple:#7b5cd6; --line:#e5e7eb;
-  }
-  *{box-sizing:border-box; margin:0;}
-  body{font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); color:var(--ink); padding:24px;}
-  header{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:20px;}
-  h1{font-size:22px; color:#b02a2a;}
-  .sub{color:var(--muted); font-size:13px; margin-top:2px;}
-  .btn{background:var(--blue); color:#fff; border:none; border-radius:8px; padding:10px 18px; font-size:14px; cursor:pointer; font-family:inherit;}
-  .btn:hover{filter:brightness(1.1);}
-  .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(175px,1fr)); gap:14px; margin-bottom:20px;}
-  .kpi{background:var(--card); border-radius:10px; padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,.08); border-top:4px solid var(--blue);}
-  .kpi .label{font-size:13px; color:var(--muted);}
-  .kpi .value{font-size:24px; font-weight:700; margin-top:4px;}
-  .kpi .delta{font-size:12px; margin-top:4px;}
-  .up{color:var(--green);} .down{color:var(--red);}
-  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(430px,1fr)); gap:14px;}
-  .card{background:var(--card); border-radius:10px; padding:18px; box-shadow:0 1px 3px rgba(0,0,0,.08);}
-  .card h2{font-size:15px; margin-bottom:12px; border-left:4px solid var(--blue); padding-left:8px;}
-  .chart-wrap{position:relative; height:260px;}
-  footer{margin-top:22px; font-size:12px; color:var(--muted); line-height:1.7;}
-  dialog{border:none; border-radius:12px; padding:24px; max-width:560px; box-shadow:0 10px 40px rgba(0,0,0,.25); font-family:inherit;}
-  dialog h3{margin-bottom:10px;}
-  dialog ol{margin:10px 0 14px 20px; line-height:1.8; font-size:14px;}
-  dialog button{float:right;}
-  @media print{.btn{display:none;}}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#1e3a5f;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
+.box{background:#fff;border-radius:14px;padding:36px 40px;box-shadow:0 12px 40px rgba(0,0,0,.35);max-width:380px;width:90%;text-align:center;}
+h1{font-size:19px;color:#b02a2a;margin:0 0 6px;}
+p{font-size:13px;color:#6b7280;margin:0 0 20px;}
+input{width:100%;box-sizing:border-box;padding:12px;font-size:16px;border:1.5px solid #d1d5db;border-radius:8px;text-align:center;letter-spacing:1px;}
+button{width:100%;margin-top:14px;padding:12px;font-size:15px;background:#1e5aa8;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;}
+button:hover{filter:brightness(1.1);}
+.err{color:#d64545;font-size:13px;margin-top:10px;min-height:18px;}
+.note{font-size:11px;color:#9ca3af;margin-top:16px;}
 </style>
 </head>
 <body>
-
-<header>
-  <div>
-    <h1>SINGER — Risk Management Dashboard</h1>
-    <div class="sub">ฝ่ายตรวจสอบภายในและบริหารความเสี่ยง | ข้อมูล ณ <b id="asOf"></b> | อัปเดตล่าสุด <span id="gen"></span></div>
-  </div>
-  <button class="btn" onclick="refreshData()">⟳ ดึงข้อมูลล่าสุด</button>
-</header>
-
-<div class="kpis" id="kpiRow"></div>
-
-<div class="grid">
-  <div class="card"><h2>NPL % และ Stage 2 (SM) % รายเดือน</h2><div class="chart-wrap"><canvas id="chNpl"></canvas></div></div>
-  <div class="card"><h2>ยอดสินเชื่อคงค้างรวม (ล้านบาท)</h2><div class="chart-wrap"><canvas id="chPort"></canvas></div></div>
-  <div class="card"><h2>ยอดขายรายเดือน (ล้านบาท)</h2><div class="chart-wrap"><canvas id="chSales"></canvas></div></div>
-  <div class="card"><h2>ยอดขายน้ำมัน PVM รายเดือน</h2><div class="chart-wrap"><canvas id="chPvm"></canvas></div></div>
-  <div class="card"><h2>Inventory ตามกลุ่มสินค้า (ล้านบาท)</h2><div class="chart-wrap"><canvas id="chInv"></canvas></div></div>
-  <div class="card"><h2>สำรองจาก Aging สินค้าคงเหลือ (ล้านบาท)</h2><div class="chart-wrap"><canvas id="chAging"></canvas></div></div>
-  <div class="card"><h2>งานบริการ: % เข้างานตรงนัด (SLA)</h2><div class="chart-wrap"><canvas id="chSla"></canvas></div></div>
-  <div class="card"><h2>งานบริการ: คะแนนความพึงพอใจ (เต็ม 5)</h2><div class="chart-wrap"><canvas id="chCsat"></canvas></div></div>
+<div class="box">
+<h1>SINGER — Risk Management Dashboard</h1>
+<p>ข้อมูลภายในองค์กร กรุณาใส่รหัสผ่าน</p>
+<input type="password" id="pw" placeholder="รหัสผ่าน" autofocus>
+<button onclick="go()">เปิด Dashboard</button>
+<div class="err" id="err"></div>
+<div class="note">เนื้อหาเข้ารหัส AES-256 — เปิดได้เฉพาะผู้มีรหัสผ่าน</div>
 </div>
-
-<footer id="src"></footer>
-
-<dialog id="refreshDlg">
-  <h3>วิธีอัปเดตข้อมูล</h3>
-  <p style="font-size:14px; line-height:1.7;">Dashboard นี้อ่านข้อมูลจากไฟล์ <code>data.js</code> ใน repository เดียวกัน
-  การดึงข้อมูลจาก Alfresco โดยตรงจากหน้าเว็บทำไม่ได้ (ระบบ Alfresco เป็นเครือข่ายภายในและไม่เปิด CORS) ขั้นตอนอัปเดต:</p>
-  <ol>
-    <li>เปิด Cowork แล้วสั่ง <b>"อัปเดตข้อมูล dashboard จาก Alfresco"</b></li>
-    <li>Claude จะดึงไฟล์ล่าสุด ประมวลผล และสร้าง <code>data.js</code> ใหม่</li>
-    <li>อัปโหลด <code>data.js</code> ทับใน GitHub → ทุกคนเห็นข้อมูลใหม่ทันที</li>
-  </ol>
-  <button class="btn" onclick="refreshDlg.close()">ปิด</button>
-</dialog>
-
 <script>
-window.DASHBOARD_DATA = {"npl": {"months": ["ม.ค. 2566", "ก.พ. 2566", "มี.ค. 2566", "เม.ย. 2566", "พ.ค. 2566", "มิ.ย. 2566", "ก.ค. 2566", "ส.ค. 2566", "ก.ย. 2566", "ต.ค. 2566", "พ.ย. 2566", "ธ.ค. 2566", "ม.ค. 2567", "ก.พ. 2567", "มี.ค. 2567", "เม.ย. 2567", "พ.ค. 2567", "มิ.ย. 2567", "ก.ค. 2567", "ส.ค. 2567", "ก.ย. 2567", "ต.ค. 2567", "พ.ย. 2567", "ธ.ค. 2567", "ม.ค. 2568", "ก.พ. 2568", "มี.ค. 2568", "เม.ย. 2568", "พ.ค. 2568", "มิ.ย. 2568", "ก.ค. 2568", "ส.ค. 2568", "ก.ย. 2568", "ต.ค. 2568", "พ.ย. 2568", "ธ.ค. 2568", "ม.ค. 2569", "ก.พ. 2569", "มี.ค. 2569", "เม.ย. 2569", "พ.ค. 2569", "มิ.ย. 2569"], "nplPct": [4.94, 4.91, 10.49, 14.25, 17.72, 9.15, 14.09, 16.86, 18.43, 21.37, 20.76, 21.17, 21.21, 21.61, 21.63, 22.29, 21.59, 21.54, 22.32, 22.39, 22.98, 23.04, 22.78, 23.12, 22.25, 20.27, 18.67, 17.33, 17.75, 18.25, 18.92, 18.75, 18.33, 18.32, 17.22, 15.55, 12.53, 12.39, 12.33, 12.8, 12.58, 11.72], "smPct": [16.69, 17.51, 14.67, 13.63, 11.93, 16.16, 15.46, 13.92, 11.95, 11.52, 10.84, 11.1, 11.38, 11.45, 11.61, 12.86, 15.44, 16.2, 15.94, 16.14, 16.62, 16.68, 16.71, 14.93, 14.74, 16.96, 16.55, 16.62, 16.55, 15.95, 14.41, 14.68, 14.19, 13.74, 13.32, 13.45, 13.17, 13.05, 12.17, 11.5, 11.0, 10.29], "outstanding": [17902.0, 18366.0, 18581.0, 18653.0, 18455.0, 16426.0, 16805.0, 16857.0, 16808.0, 14137.0, 14362.0, 14599.0, 14649.0, 14407.0, 14238.0, 14235.0, 14101.0, 13877.0, 13830.0, 13759.0, 14029.0, 14067.0, 14164.0, 14388.0, 14230.0, 13863.0, 13632.0, 13416.0, 13597.0, 13699.0, 13891.0, 14008.0, 14122.0, 14222.0, 14119.0, 14119.0, 13741.0, 13799.0, 13876.0, 13996.0, 14069.0, 14169.0]}, "sales": {"monthly": {"2022": {"1": 322.6, "2": 274.1, "3": 352.1, "4": 368.0, "5": 354.9, "6": 387.8, "7": 356.9, "8": 252.6, "9": 171.5, "10": 130.6, "11": 167.9, "12": 175.2}, "2023": {"1": 58.4, "2": 71.9, "3": 135.6, "4": 76.7, "5": 46.1, "6": 34.9, "7": 29.3, "8": 36.0, "9": 39.0, "10": 44.5, "11": 49.6, "12": 49.8}, "2024": {"1": 25.6, "2": 40.7, "3": 50.4, "4": 57.2, "5": 43.6, "6": 30.6, "7": 25.2, "8": 26.3, "9": 23.1, "10": 24.7, "11": 22.1, "12": 29.8}, "2025": {"1": 25.8, "2": 28.2, "3": 36.2, "4": 32.9, "5": 34.6, "6": 41.3, "7": 36.9, "8": 37.2, "9": 47.2, "10": 54.3, "11": 50.6, "12": 65.4}, "2026": {"1": 58.9, "2": 63.6, "3": 80.5}}, "byGroup": {"2022": {"กลุ่มเครื่องซักผ้า": 258.0, "กลุ่มเครื่องปรับอากาศ": 382.5, "กลุ่มจักรเย็บผ้า": 27.3, "กลุ่มตู้เย็น": 216.6, "กลุ่มโทรทัศน์": 257.1, "กลุ่มสินค้าตู้แช่": 534.2, "กลุ่มสินค้าตู้เติมเงิน": 34.2, "กลุ่มสินค้าตู้น้ำมัน": 694.2, "กลุ่มสินค้าเพื่อการพาณิชย์": 67.1, "กลุ่มสินค้ามือถือ": 842.8}, "2023": {"กลุ่มเครื่องซักผ้า": 33.6, "กลุ่มเครื่องปรับอากาศ": 65.6, "กลุ่มจักรเย็บผ้า": 20.1, "กลุ่มตู้เย็น": 30.6, "กลุ่มโทรทัศน์": 25.1, "กลุ่มสินค้าตู้แช่": 124.1, "กลุ่มสินค้าตู้เติมเงิน": 2.9, "กลุ่มสินค้าตู้น้ำมัน": 96.0, "กลุ่มสินค้าเพื่อการพาณิชย์": 30.9, "กลุ่มสินค้ามือถือ": 242.9}, "2024": {"กลุ่มเครื่องซักผ้า": 29.7, "กลุ่มเครื่องปรับอากาศ": 101.4, "กลุ่มจักรเย็บผ้า": 24.3, "กลุ่มตู้เย็น": 22.4, "กลุ่มโทรทัศน์": 25.1, "กลุ่มสินค้าตู้แช่": 78.2, "กลุ่มสินค้าตู้เติมเงิน": 0.8, "กลุ่มสินค้าตู้น้ำมัน": 55.4, "กลุ่มสินค้าเพื่อการพาณิชย์": 17.3, "กลุ่มสินค้ามือถือ": 44.9}, "2025": {"กลุ่มเครื่องซักผ้า": 26.5, "กลุ่มเครื่องปรับอากาศ": 61.5, "กลุ่มจักรเย็บผ้า": 38.5, "กลุ่มตู้เย็น": 17.9, "กลุ่มโทรทัศน์": 20.2, "กลุ่มสินค้าตู้แช่": 60.9, "กลุ่มสินค้าตู้เติมเงิน": 0.6, "กลุ่มสินค้าตู้น้ำมัน": 18.4, "กลุ่มสินค้าเพื่อการพาณิชย์": 8.6, "กลุ่มสินค้ามือถือ": 237.4}, "2026": {"กลุ่มเครื่องซักผ้า": 4.7, "กลุ่มเครื่องปรับอากาศ": 20.7, "กลุ่มจักรเย็บผ้า": 10.5, "กลุ่มตู้เย็น": 4.2, "กลุ่มโทรทัศน์": 3.3, "กลุ่มสินค้าตู้แช่": 14.4, "กลุ่มสินค้าตู้เติมเงิน": 0.0, "กลุ่มสินค้าตู้น้ำมัน": 3.0, "กลุ่มสินค้าเพื่อการพาณิชย์": 0.7, "กลุ่มสินค้ามือถือ": 141.5}}}, "pvm": {"litersMonthly": {"2024-01": 34158.0, "2024-02": 37803.0, "2024-03": 53662.0, "2024-04": 58442.0, "2024-05": 57224.0, "2024-06": 67120.0, "2024-07": 78675.0, "2024-08": 106158.0, "2024-09": 136462.0, "2024-10": 130427.0, "2024-11": 171708.0, "2024-12": 173039.0, "2025-01": 202262.0, "2025-02": 185061.0, "2025-03": 193080.0, "2025-04": 194052.0, "2025-05": 202212.0, "2025-06": 224898.0, "2025-07": 219479.0, "2025-08": 226951.0, "2025-09": 230631.0, "2025-10": 226501.0, "2025-11": 239087.0, "2025-12": 233710.0, "2026-01": 61318926.0, "2026-02": 232915.0, "2026-03": 288348.0, "2026-04": 482993.0, "2026-05": 414441.0, "2026-06": 467952.0}, "bahtMonthly": {"2024-01": 1.6, "2024-02": 1.8, "2024-03": 2.59, "2024-04": 2.86, "2024-05": 2.84, "2024-06": 3.34, "2024-07": 3.88, "2024-08": 5.31, "2024-09": 6.02, "2024-10": 6.18, "2024-11": 8.43, "2024-12": 8.48, "2025-01": 9.91, "2025-02": 9.01, "2025-03": 9.36, "2025-04": 9.38, "2025-05": 9.89, "2025-06": 11.0, "2025-07": 10.35, "2025-08": 10.48, "2025-09": 10.9, "2025-10": 10.73, "2025-11": 11.23, "2025-12": 10.96, "2026-01": 11.77, "2026-02": 10.97, "2026-03": 13.52, "2026-04": 16.07, "2026-05": 15.12, "2026-06": 17.18}}, "inventory": {"byGroup": {"Home App": {"amt": 58.99, "prov": 7.2}, "Commercial VM": {"amt": 18.31, "prov": 16.91}, "Commercial Non-VM": {"amt": 37.48, "prov": 6.47}, "Sewing Machine": {"amt": 33.32, "prov": 3.0}, "Small App": {"amt": 20.41, "prov": 5.03}, "Mobile & Gadget": {"amt": 96.58, "prov": 1.15}, "Vehicle": {"amt": 2.22, "prov": 0.0}, "Plastic Bag": {"amt": 3.5, "prov": 0.19}, "Other": {"amt": 589.05, "prov": 83.94}}, "totalAmt": 859.9, "totalProvision": 123.9, "aging": {"labels": ["ปีที่ 1", "ปีที่ 2", "ปีที่ 3", "ปีที่ 4", "ปีที่ 5", "ปีที่ 6", "เกิน 6 ปี"], "values": [0.06, 5.97, 4.47, 11.88, 8.47, 3.7, 3.42]}}, "service": {"months": ["ม.ค.69", "ก.พ.69", "มี.ค.69", "เม.ย.69", "พ.ค.69", "มิ.ย.69"], "jobs": [129, 138, 273, 98, 178, 149], "onTimePct": [85.3, 97.1, 94.1, 94.8, 94.0, 95.9], "introPct": [87.6, 98.6, 99.3, 100.0, 100.0, 100.0], "quality": [4.59, 4.86, 4.72, 4.78, 4.81, 4.74], "satisfaction": [4.45, 4.86, 4.69, 4.8, 4.77, 4.62]}, "meta": {"asOf": "มิ.ย. 2569 (Q2'69)", "generated": "19/08/2026 11:30", "source": "Alfresco » Internal Audit and Risk Management » Data", "files": {"NPL": "1_SGC_สินเชื่อคงค้างและสถานะสินเชื่อ ม.ค.2566–มิ.ย.2569 (Edit 15 Jul 2026)", "ยอดขาย": "ยอดขาย STL GM Jan 22 to Mar 26.xlsx", "ยอดขายน้ำมัน": "2026_06_PVM-Impairment.xlsx (ชีต Summary)", "Inventory": "06.26_Calculation of inventory reserve_NRV (Q2'69).xlsb", "งานบริการ": "NPS 2026-1.xlsx (ม.ค.–มิ.ย.2569)"}}};
-</script>
-<script>
-const D = window.DASHBOARD_DATA;
-const fmt = n => n==null?'-':n.toLocaleString('th-TH');
-const last = a => a[a.length-1], prev = a => a[a.length-2];
-
-document.getElementById('asOf').textContent = D.meta.asOf;
-document.getElementById('gen').textContent = D.meta.generated;
-document.getElementById('src').innerHTML =
-  '<b>แหล่งข้อมูล:</b> '+D.meta.source+'<br>'+
-  Object.entries(D.meta.files).map(([k,v])=>k+': '+v).join(' | ');
-
-function refreshData(){
-  fetch(location.href,{cache:'reload'}).then(()=>refreshDlg.showModal()).catch(()=>refreshDlg.showModal());
+const P = {"salt": "TBOtCxJ7FzY2I1xzj2dEhg==", "nonce": "gSLum/oFk+OBIMxe", "iters": 310000, "ct": "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"};
+const b64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+async function go(){
+  const err=document.getElementById('err'); err.textContent='กำลังถอดรหัส...';
+  try{
+    const pw=document.getElementById('pw').value;
+    const keyMat=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+    const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(P.salt),iterations:P.iters,hash:'SHA-256'},keyMat,{name:'AES-GCM',length:256},false,['decrypt']);
+    const gz=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(P.nonce)},key,b64(P.ct));
+    const stream=new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'));
+    const html=await new Response(stream).text();
+    document.open(); document.write(html); document.close();
+  }catch(e){ err.textContent='รหัสผ่านไม่ถูกต้อง'; }
 }
-
-// ---------- KPI ----------
-const npl=D.npl, svc=D.service, inv=D.inventory;
-const salesM=D.sales.monthly;
-const years=Object.keys(salesM).sort();
-const salesFlat=[], salesLabels=[];
-for(const y of years){ for(const m of Object.keys(salesM[y]).map(Number).sort((a,b)=>a-b)){ salesFlat.push(salesM[y][m]); salesLabels.push(m+'/'+y.slice(2)); } }
-const pvmB=Object.entries(D.pvm.bahtMonthly), pvmL=Object.entries(D.pvm.litersMonthly);
-
-const kpis=[
- {label:'NPL Ratio ('+last(npl.months)+')', value:last(npl.nplPct)+'%', diff:+(last(npl.nplPct)-prev(npl.nplPct)).toFixed(2), goodWhenDown:true, unit:' pt', color:'var(--red)'},
- {label:'Stage 2 (SM)', value:last(npl.smPct)+'%', diff:+(last(npl.smPct)-prev(npl.smPct)).toFixed(2), goodWhenDown:true, unit:' pt', color:'var(--amber)'},
- {label:'สินเชื่อคงค้างรวม', value:fmt(last(npl.outstanding))+' ลบ.', color:'var(--blue)'},
- {label:'ยอดขายเดือนล่าสุด ('+last(salesLabels)+')', value:fmt(last(salesFlat))+' ลบ.', diff:+(last(salesFlat)-prev(salesFlat)).toFixed(1), unit:' ลบ.', color:'var(--blue)'},
- {label:'ขายน้ำมัน PVM ('+last(pvmB)[0]+')', value:last(pvmB)[1]+' ลบ.', diff:+(last(pvmB)[1]-prev(pvmB)[1]).toFixed(2), unit:' ลบ.', color:'var(--green)'},
- {label:'Inventory รวม', value:fmt(inv.totalAmt)+' ลบ.', color:'var(--amber)'},
- {label:'สำรอง Inventory', value:fmt(inv.totalProvision)+' ลบ.', color:'var(--amber)'},
- {label:'SLA เข้างานตรงนัด ('+last(svc.months)+')', value:last(svc.onTimePct)+'%', diff:+(last(svc.onTimePct)-prev(svc.onTimePct)).toFixed(1), unit:' pt', color:'var(--green)'},
- {label:'ความพึงพอใจ ('+last(svc.months)+')', value:last(svc.satisfaction)+' / 5', diff:+(last(svc.satisfaction)-prev(svc.satisfaction)).toFixed(2), color:'var(--purple)'}
-];
-document.getElementById('kpiRow').innerHTML = kpis.map(k=>{
-  let d='';
-  if(k.diff!==undefined && k.diff!==0 && !isNaN(k.diff)){
-    const good=k.goodWhenDown?k.diff<0:k.diff>0;
-    d=`<div class="delta ${good?'up':'down'}">${k.diff>0?'▲':'▼'} ${Math.abs(k.diff).toLocaleString('th-TH')}${k.unit||''} จากเดือนก่อน</div>`;
-  }
-  return `<div class="kpi" style="border-top-color:${k.color}"><div class="label">${k.label}</div><div class="value">${k.value}</div>${d}</div>`;
-}).join('');
-
-// ---------- Charts ----------
-Chart.defaults.font.family="'Segoe UI',Tahoma,sans-serif";
-const opts={responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}};
-const line=(data,color,label,extra={})=>({label,data,borderColor:color,backgroundColor:color,tension:.3,pointRadius:2,...extra});
-
-new Chart(chNpl,{type:'line',options:opts,data:{labels:npl.months,datasets:[
-  line(npl.nplPct,'#d64545','NPL % (Stage 3)'),
-  line(npl.smPct,'#e8a13c','SM % (Stage 2)')
-]}});
-
-new Chart(chPort,{type:'line',options:opts,data:{labels:npl.months,datasets:[
-  line(npl.outstanding,'#1e5aa8','สินเชื่อคงค้าง (ลบ.)',{fill:true,backgroundColor:'rgba(30,90,168,.12)'})
-]}});
-
-new Chart(chSales,{type:'bar',options:opts,data:{labels:salesLabels,datasets:[
-  {label:'ยอดขาย (ลบ.) ไม่รวม VAT',data:salesFlat,backgroundColor:salesLabels.map(l=>l.endsWith('/26')?'#1e5aa8':'#9db8d9')}
-]}});
-
-new Chart(chPvm,{type:'bar',options:{...opts,scales:{y:{position:'left',title:{display:true,text:'ลบ.'}},y2:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'พันลิตร'}}}},
- data:{labels:pvmB.map(e=>e[0]),datasets:[
-  {label:'ยอดขาย (ลบ.)',data:pvmB.map(e=>e[1]),backgroundColor:'#3d9970',yAxisID:'y'},
-  {...line(pvmL.map(e=>Math.round(e[1]/1000)),'#1e5aa8','ปริมาณ (พันลิตร)'),type:'line',yAxisID:'y2'}
-]}});
-
-const gEntries=Object.entries(inv.byGroup).sort((a,b)=>b[1].amt-a[1].amt);
-new Chart(chInv,{type:'bar',options:{...opts,indexAxis:'y'},data:{labels:gEntries.map(e=>e[0]),datasets:[
-  {label:'มูลค่าสินค้า (ลบ.)',data:gEntries.map(e=>e[1].amt),backgroundColor:'#1e5aa8'},
-  {label:'สำรองที่ต้องตั้ง (ลบ.)',data:gEntries.map(e=>e[1].prov),backgroundColor:'#d64545'}
-]}});
-
-new Chart(chAging,{type:'bar',options:{...opts,indexAxis:'y'},data:{labels:inv.aging.labels,datasets:[
-  {label:'มูลค่าตาม aging (ลบ.)',data:inv.aging.values,
-   backgroundColor:['#3d9970','#8bbf6a','#e8a13c','#e07b39','#d64545','#a83232','#701f1f']}
-]}});
-
-new Chart(chSla,{type:'bar',options:{...opts,scales:{y:{min:0,max:100}}},data:{labels:svc.months,datasets:[
-  {label:'% เข้างานตรงนัด',data:svc.onTimePct,backgroundColor:'#3d9970'},
-  {label:'% แนะนำตัว/แจ้งค่าบริการ',data:svc.introPct,backgroundColor:'#9db8d9'}
-]}});
-
-new Chart(chCsat,{type:'line',options:{...opts,scales:{y:{min:3.5,max:5}}},data:{labels:svc.months,datasets:[
-  line(svc.satisfaction,'#7b5cd6','ความพึงพอใจ'),
-  line(svc.quality,'#3d9970','คุณภาพงาน')
-]}});
+document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')go();});
 </script>
 </body>
 </html>
