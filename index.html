@@ -38,7 +38,9 @@ async function go(){
     const gz=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(P.nonce)},key,b64(P.ct));
     const stream=new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'));
     const html=await new Response(stream).text();
-    document.open(); document.write(html); document.close();
+    const FIX='<scr'+'ipt>window.fixPanel=function(p){if(!p)return;for(const c of Object.values(Chart.instances)){if(p.contains(c.canvas)){try{c.resize();c.update(\'none\');}catch(e){}}}};document.querySelectorAll(".tab").forEach(function(t){t.onclick=function(){document.querySelectorAll(".tab").forEach(function(x){x.classList.remove("active")});document.querySelectorAll(".panel").forEach(function(x){x.classList.remove("active")});t.classList.add("active");var p=document.getElementById(t.dataset.p);p.classList.add("active");requestAnimationFrame(function(){fixPanel(p)})}});setTimeout(function(){fixPanel(document.querySelector(".panel.active"))},500);<\/scr'+'ipt>';
+    const out = html.indexOf('</body>')>0 ? html.replace('</body>', FIX+'</body>') : html+FIX;
+    document.open(); document.write(out); document.close();
   }catch(e){ err.textContent='รหัสผ่านไม่ถูกต้อง'; }
 }
 document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')go();});
